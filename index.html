@@ -156,6 +156,23 @@
             #result {
                 font-size: 40px;
             }
+
+        .static-text {
+            color: #666;
+            margin-right: 10px;
+            font-weight: normal;
+        }
+
+        #EnglishTasks {
+            color: #2196F3;
+            font-weight: bold;
+        }
+
+        #ChineseTasks {
+            color: #2196F3;
+            font-weight: bold;
+        }
+
         }
     </style>
 </head>
@@ -169,20 +186,52 @@
         </div>
 
         <div class="countdown-section">
-            <div id="event-name">🎓 距离学考还有</div>
-            <div id="target-display">目标日期：2025年7月5日</div>
+            <div id="event-name"></div>
+            <div id="target-display"></div>
             <div id="result"></div>
         </div>
 
         <div class="footer">
             <h1>⏰ 把握每一天，成就更好的自己！</h1>
-            <h1>本周学习任务如下<br>语文：背诵《六国论》<br>英语：背诵作文15、16</h1>
-
+            <h1>本周学习任务如下</h1>
+            <h1>
+            <span class="static-text">英语：</span>
+            <span id="EnglishTasks"></span>
+            </h1>
+            <h1>
+            <span class="static-text">语文：</span>
+            <span id="ChineseTasks"></span>
+            </h1>
         </div>
     </div>
 
     <script>
-        const TARGET_DATE = new Date('2025-07-05T00:00:00');  /*在这里设置日期，不要忘记更改上面的哦*/
+        // 配置管理
+        const DEFAULT_SETTINGS = {
+            eventName: '🎓 请设置日期喵',
+            targetDate: '2025-08-23',
+            EnglishTasks: '设置英语任务喵',
+            ChineseTasks: '设置语文任务喵',
+              };
+
+        // 初始化配置
+        let currentSettings = JSON.parse(localStorage.getItem('countdownSettings')) || DEFAULT_SETTINGS;
+        let TARGET_DATE = new Date(currentSettings.targetDate);
+
+        // 应用设置到界面
+        function applySettings() {
+            document.getElementById('event-name').textContent = currentSettings.eventName;
+            document.getElementById('target-display').textContent = 
+                `目标日期：${new Date(currentSettings.targetDate).toLocaleDateString('zh-CN')}`;
+            document.getElementById('EnglishTasks').innerHTML = currentSettings.EnglishTasks;
+            document.getElementById('ChineseTasks').innerHTML = currentSettings.ChineseTasks;
+
+            // 更新倒计时日期
+            TARGET_DATE = new Date(currentSettings.targetDate);
+            updateCountdown();
+        }
+
+        applySettings();
 
         function updateTime() {
             const now = new Date();
@@ -218,6 +267,7 @@
             document.getElementById('result').innerHTML = resultText;
         }
 
+        // 初始化
         function init() {
             setInterval(updateTime, 1000);
             updateTime();
@@ -226,6 +276,9 @@
         }
 
         init();
+
+        
     </script>
+
 </body>
 </html>
