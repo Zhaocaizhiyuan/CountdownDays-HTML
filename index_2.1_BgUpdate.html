@@ -1,0 +1,403 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CountdownDays</title>
+    <style>
+        html {
+            overflow: -moz-hidden-unscrollable;
+            overflow-y: auto; 
+            -ms-overflow-style: none;
+        }
+
+        body {
+            -ms-overflow-style: none;
+            overflow: -moz-scrollbars-none;
+            scrollbar-width: none;
+        }
+
+        ::-webkit-scrollbar {
+            display: none;
+            width: 0 !important;
+            height: 0 !important;
+            background: transparent;
+        }
+   
+    body {
+        margin: 0;
+        padding: 0;
+        min-height: 100vh;
+        font-family: 'Arial', sans-serif;
+        background-size: cover;
+        background-position: left center;
+        background-repeat: no-repeat;
+        background-attachment: fixed;
+        display: flex;
+        position: relative;
+    }
+
+    #video-bg {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        z-index: -1;
+    }
+
+    #image-bg {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background-size: cover;
+        background-position: left center;
+        background-repeat: no-repeat;
+        z-index: -1;
+    }
+        
+        body::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 50%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.2);
+            z-index: 0;
+        }
+
+        .container {
+            position: relative;
+            background: rgba(255, 255, 255, 0.6);
+            backdrop-filter: blur(8px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            width: 45%;
+            min-width: 500px;
+            min-height: 100vh;
+            margin-left: auto;
+            padding: 30px 50px;
+            box-shadow: -5px 0 30px rgba(0,0,0,0.15);
+            z-index: 2;
+        }
+
+        .logo {
+            display: block;
+            max-width: 200px;
+            margin: 0 auto 30px;
+            filter: drop-shadow(2px 2px 4px rgba(0,0,0,0.1));
+        }
+
+        .time-section {
+            text-align: left;
+            margin-bottom: 40px;
+        }
+
+        #current-date {
+            font-size: 26px;
+            color: rgba(0, 0, 0, 0.8);
+            text-shadow: 1px 1px 2px rgba(255, 255, 255, 0.5);
+            margin-bottom: 15px;
+        }
+
+        #current-time {
+            font-size: 42px;
+            color: #1565c0;
+            text-shadow: 1px 1px 3px rgba(255, 255, 255, 0.5);
+        }
+
+        .countdown-section {
+            text-align: left;
+            padding: 30px;
+            background: rgba(245, 245, 245, 0.6);
+            border-radius: 12px;
+            margin-top: 50px;
+            border: 1px solid rgba(255, 255, 255, 0.3);
+        }
+
+        #event-name {
+            font-size: 32px;
+            color: #2c3e50;
+            margin-bottom: 20px;
+        }
+
+        #target-display {
+            font-size: 20px;
+            color: #666;
+            margin-bottom: 25px;
+        }
+
+        #result {
+            font-size: 48px;
+            color: #e91e63;
+            margin: 25px 0;
+            text-shadow: 1px 1px 2px rgba(255, 255, 255, 0.3);
+        }
+
+        .footer {
+            text-align: center;
+            color: #0066cc;
+            margin-top: 50px;
+            font-size: 14px;
+            padding: 20px 0;
+            border-top: 1px solid rgba(238, 238, 238, 0.5);
+        }
+
+        @media (max-width: 768px) {
+            body {
+                flex-direction: column;
+                background-position: center;
+            }
+
+            body::before {
+                width: 100%;
+                height: 40%;
+            }
+
+            .container {
+                width: 100%;
+                min-width: auto;
+                padding: 20px;
+                margin-top: 40%;
+                backdrop-filter: blur(5px);
+            }
+
+            .logo {
+                max-width: 150px;
+            }
+
+            #current-time {
+                font-size: 36px;
+            }
+
+            #result {
+                font-size: 40px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <img src="example-logo.png" class="logo" alt="Logo">
+
+        <div class="time-section">
+            <div id="current-date"></div>
+            <div id="current-time"></div>
+        </div>
+
+        <div class="countdown-section">
+            <div id="event-name">🎓 距离学考还有</div>
+            <div id="target-display">目标日期：2025年7月5日</div>
+            <div id="result"></div>
+        </div>
+
+        <div class="footer">
+            <h1>⏰ 把握每一天，成就更好的自己！</h1>
+            <h1>本周学习任务如下<br>语文：背诵《六国论》<br>英语：背诵作文15、16</h1>
+
+        </div>
+    </div>
+
+    <script>
+        const TARGET_DATE = new Date('2025-07-05T00:00:00');  /*在这里设置日期，不要忘记更改上面的哦*/
+
+const backgroundManager = {
+    supportedFormats: {
+        video: ['webm', 'mp4', 'mov', 'avi'],
+        image: ['gif', 'jpg', 'jpeg', 'png', 'bmp', 'svg']
+    },
+    
+    initBackground: function() {
+        const bgSetting = localStorage.getItem('backgroundSetting');
+        if (bgSetting) {
+            this.applyBackground(JSON.parse(bgSetting));
+            return;
+        }
+        
+        this.autoDetectBackground();
+    },
+    
+    autoDetectBackground: function() {
+        const bgFiles = ['bg', 'background', 'wallpaper'];
+        const extensions = [...this.supportedFormats.video, ...this.supportedFormats.image];
+        
+        for (const fileName of bgFiles) {
+            for (const ext of extensions) {
+                const filePath = `${fileName}.${ext}`;
+                this.testFileExists(filePath, (exists) => {
+                    if (exists) {
+                        console.log(`找到背景文件: ${filePath}`);
+                        const setting = {
+                            type: this.supportedFormats.video.includes(ext) ? 'video' : 'image',
+                            path: filePath
+                        };
+                        localStorage.setItem('backgroundSetting', JSON.stringify(setting));
+                        this.applyBackground(setting);
+                        return;
+                    }
+                });
+            }
+        }
+        
+
+        this.applyDefaultBackground();
+    },
+    
+    testFileExists: function(filePath, callback) {
+        const tester = new Image();
+        tester.onload = function() {
+            callback(true);
+        };
+        tester.onerror = function() {
+            if (filePath.endsWith('.webm') || filePath.endsWith('.mp4')) {
+                const videoTester = document.createElement('video');
+                videoTester.src = filePath;
+                videoTester.addEventListener('loadeddata', function() {
+                    callback(true);
+                });
+                videoTester.addEventListener('error', function() {
+                    callback(false);
+                });
+            } else {
+                callback(false);
+            }
+        };
+        tester.src = filePath;
+    },
+    
+    applyBackground: function(setting) {
+        if (setting.type === 'video') {
+            this.setVideoBackground(setting.path);
+        } else {
+            this.setImageBackground(setting.path);
+        }
+    },
+    
+    setVideoBackground: function(videoPath) {
+        const videoBg = document.getElementById('video-bg');
+        const imageBg = document.getElementById('image-bg');
+        
+        // 隐藏图片背景
+        imageBg.style.display = 'none';
+        
+        // 设置视频源并显示
+        videoBg.innerHTML = `<source src="${videoPath}" type="video/${videoPath.split('.').pop()}">`;
+        videoBg.style.display = 'block';
+        videoBg.play().catch(e => {
+            console.log('视频自动播放被阻止:', e);
+            // 如果自动播放被阻止，显示播放按钮
+            this.showVideoPlayButton();
+        });
+    },
+    
+    setImageBackground: function(imagePath) {
+        const videoBg = document.getElementById('video-bg');
+        const imageBg = document.getElementById('image-bg');
+        
+        videoBg.style.display = 'none';
+        
+        imageBg.style.backgroundImage = `url('${imagePath}')`;
+        imageBg.style.display = 'block';
+    },
+    
+    showVideoPlayButton: function() {
+        const playButton = document.createElement('div');
+        playButton.innerHTML = '▶';
+        playButton.style.cssText = `
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            width: 50px;
+            height: 50px;
+            background: rgba(0,0,0,0.7);
+            color: white;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            cursor: pointer;
+            z-index: 1000;
+        `;
+        playButton.addEventListener('click', function() {
+            document.getElementById('video-bg').play();
+            playButton.remove();
+        });
+        document.body.appendChild(playButton);
+    },
+    
+
+    applyDefaultBackground: function() {
+        console.log('未找到背景文件，使用默认背景');
+        document.body.style.backgroundColor = '#247AD6';
+    },
+    
+    setCustomBackground: function(filePath) {
+        const ext = filePath.split('.').pop().toLowerCase();
+        const type = this.supportedFormats.video.includes(ext) ? 'video' : 'image';
+        
+        const setting = {
+            type: type,
+            path: filePath
+        };
+        
+        localStorage.setItem('backgroundSetting', JSON.stringify(setting));
+        this.applyBackground(setting);
+    }
+};
+
+document.addEventListener('DOMContentLoaded', function() {
+    backgroundManager.initBackground();
+});
+
+
+        function updateTime() {
+            const now = new Date();
+            const options = { 
+                year: 'numeric', 
+                month: 'long', 
+                day: 'numeric',
+                weekday: 'long'
+            };
+            
+            document.getElementById('current-date').innerHTML = 
+                now.toLocaleDateString('zh-CN', options) + 
+                `<span class="weekday">${now.toLocaleDateString('zh-CN', { weekday: 'long' })}</span>`;
+            
+            document.getElementById('current-time').textContent = 
+                now.toLocaleTimeString('zh-CN', { hour12: false });
+        }
+
+        function updateCountdown() {
+            const now = new Date();
+            const diff = TARGET_DATE - now;
+            const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+            
+            let resultText;
+            if (days === 0) {
+                resultText = "就是今天！🎉";
+            } else if (days > 0) {
+                resultText = `${days} 天`;
+            } else {
+                resultText = `已超过 ${Math.abs(days)} 天`;
+            }
+            
+            document.getElementById('result').innerHTML = resultText;
+        }
+
+        function init() {
+            setInterval(updateTime, 1000);
+            updateTime();
+            updateCountdown();
+            setInterval(updateCountdown, 1000 * 60 * 60);
+        }
+
+        init();
+    </script>
+</body>
+<video id="video-bg" autoplay muted loop playsinline style="display: none;"></video>
+<div id="image-bg" style="display: none;"></div>
+</html>
